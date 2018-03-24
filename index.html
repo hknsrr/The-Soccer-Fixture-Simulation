@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Fixture Simulation</title>
+
+    <style>
+        * {
+            font-family: calibri, arial, sans-serif;
+            font-size: 12px !important;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td,
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 5px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+
+</head>
+
+<body>
+    <label for="teamName">Takım Adı:</label>
+    <input type="text" name="teamName" id="teamName" value="">
+    <label for="teamPower">Güç:</label>
+    <input type="number" name="teamPower" id="teamPower" min="0" max="10000000000" value="5">
+    </br>
+    <hr>
+    <input type="button" value="Takım Ekle" id="addTeam" onclick="addTeam()">
+    <hr>
+
+    <input type="button" value="MAÇLARI OYNAT!" id="start" onclick="startLeague()">
+
+    <br/>
+
+    <div id="listContainer" style="width:50%; float: left;">
+
+
+    </div>
+
+    <div id="tableContainer" style="width:50%; float: left;">
+
+        <table id="pointTable">
+
+        </table>
+    </div>
+
+    <script>
+
+        // var teams = [
+        //     { id: 0, name: "besiktas", homeCount: 0, awayCount: 0, matches: 0, goals: 0, points: 0, power: 150 },
+        //     { id: 1, name: "fenerbahce", homeCount: 0, awayCount: 0, matches: 0, goals: 0, points: 0, power: 90 },
+        //     { id: 2, name: "galatasaray", homeCount: 0, awayCount: 0, matches: 0, goals: 0, points: 0, power: 90 },
+        //     { id: 3, name: "trabzonspor", homeCount: 0, awayCount: 0, matches: 0, goals: 0, points: 0, power: 30 },
+        //     // { id: 4, name: "karabükspor", homeCount: 0, awayCount: 0, matches: 0, goals: 0, points: 0, power: 50 },
+        //     // { id: 5, name: "giresunspor", homeCount: 0, awayCount: 0, matches: 0, goals: 0, points: 0, power: 10 }
+        // ];
+        var teams = [];
+        var idCount = 0;
+        var firstMatches = [];
+        var secondMatches = [];
+        var week = 0;
+        var uniqueID = 0;
+
+        // setTimeout(function () {
+        //     prepareFixture();
+        //     startLeague();
+        // }, 500);
+
+        function addTeam() {
+
+            if (document.getElementById("teamName").value != "") {
+
+                var team = new Object();
+                team.id = idCount;
+                team.name = document.getElementById("teamName").value;
+                team.homeCount = 0;
+                team.awayCount = 0;
+                team.matches = 0;
+                team.goals = 0;
+                team.points = 0;
+                team.power = parseInt(document.getElementById("teamPower").value);
+                teams[idCount] = team;
+                idCount++;
+                // console.log(teams);
+                if (idCount > 1)
+                    document.getElementById("start").removeAttribute('disabled');
+
+                if (idCount % 2 != 0)
+                    document.getElementById("start").setAttribute('disabled', 'disabled');
+
+                calculatePoints(teams);
+                console.log(teams, idCount);
+            }
+        }
+
+        function prepareFixture() {
+            document.getElementById("addTeam").setAttribute('disabled', 'disabled');
+            for (var i = 0; i < teams.length; i++) {
+                for (var j = 0; j < teams.length; j++) {
+                    if (teams[i].id == teams[j].id)
+                        continue;
+                    else {
+                        firstMatches.push({ id: uniqueID, home: teams[i].id, away: teams[j].id, challenge: teams[i].name + "-" + teams[j].name, lastScore: "" });
+                        uniqueID++;
+                    }
+                }
+            }
+            week++;
+            arrayShuffle(firstMatches);
+            startLeague();
+        }
+
+        function startLeague() {
+
+            if (week == 0) {
+                prepareFixture();
+            } else if (week <= teams.length - 1) {
+                console.log("ikinci period devam ediyor");
+                continueLeague(firstMatches);
+            } else if (week > teams.length - 1) {
+                console.log("ikinci period başladı...");
+                if (secondMatches.length == 0) {
+                    teams.sort(teamRanking);
+                    var element = document.createElement("p");
+                    element.setAttribute("style", "font-weight:bold");
+                    element.appendChild(document.createTextNode("ŞAMPİYON: " + teams[0].name));
+                    document.getElementById('listContainer').appendChild(element);
+                    document.getElementById("start").setAttribute('disabled', true);
+                    document.getElementById('listContainer').style.display = "block";
+                    console.log("SEZON TAMAMLANDI!");
+
+                } else {
+                    continueLeague(secondMatches);
+                }
+            }
+        }
+
+        function continueLeague(matchPeriod) {
+
+            var randomHome;
+            var randomAway;
+            var matchCount = 0;
+            var currentWeekMatches = [];
+            var results = "";
+
+            for (var index0 = 0; index0 < matchPeriod.length; index0++) {
+
+                if (currentWeekMatches.indexOf(matchPeriod[index0].home) != -1 || currentWeekMatches.indexOf(matchPeriod[index0].away) != -1)
+                    continue; // aynı hafta aynı takım tekrar maç yapmasın
+
+                currentWeekMatches.push(teams[matchPeriod[index0].home].id, teams[matchPeriod[index0].away].id);
+
+                //power measurement
+                if (teams[matchPeriod[index0].home].power > teams[matchPeriod[index0].away].power) {
+
+                    randomHome = Math.floor(Math.random() * 4) + 2;  // 2, 3 , 4, 5
+                    randomAway = Math.floor(Math.random() * 3);
+                }
+                else if (teams[matchPeriod[index0].home].power < teams[matchPeriod[index0].away].power) {
+
+                    randomAway = Math.floor(Math.random() * 4) + 2; // 2, 3 , 4, 5
+                    randomHome = Math.floor(Math.random() * 3); // 0, 1, 2
+                }
+
+                else if (teams[matchPeriod[index0].home].power == teams[matchPeriod[index0].away].power) {
+                    randomHome = Math.floor(Math.random() * 3); // 0, 1
+                    randomAway = Math.floor(Math.random() * 3); // 0, 1
+                }
+
+                results += "<li>" + "<span style='display:none;'>" + matchPeriod[index0].id + "</span>" + teams[matchPeriod[index0].home].name + " " + randomHome + "-" + randomAway + " " + teams[matchPeriod[index0].away].name + "</li>";
+
+                matchPeriod[index0].lastScore = randomHome + "-" + randomAway;
+
+                matchCount++;
+
+                if (matchCount == teams.length / 2) {
+
+                    document.getElementById('listContainer').innerHTML += week + ". Hafta" + "<ul class=week" + (week - 1) + ">" + results + "</ul><hr>";
+
+
+                    var matches = document.querySelectorAll(".week" + (week - 1) + " li span");
+
+                    for (var index = 0; index < matches.length; index++) { // revenge maçlarının silinmesi sezonun ilk yarısında yapılmaması için..
+                        for (var index2 = 0; index2 < matchPeriod.length; index2++) {
+                            if (matches[index].innerHTML == matchPeriod[index2].id) {
+
+                                var lastScore = matchPeriod[index2].lastScore;
+                                lastScore = lastScore.split("-");
+
+                                if (lastScore[0] == lastScore[1]) {
+                                    teams[matchPeriod[index2].home].points += 1;
+                                    teams[matchPeriod[index2].away].points += 1;
+                                } else if (lastScore[0] > lastScore[1]) {
+                                    teams[matchPeriod[index2].home].points += 3;
+                                } else {
+                                    teams[matchPeriod[index2].away].points += 3;
+                                }
+                                teams[matchPeriod[index2].home].goals += parseInt(lastScore[0]);
+                                teams[matchPeriod[index2].away].goals += parseInt(lastScore[1]);
+
+                                teams[matchPeriod[index2].home].matches++;
+                                teams[matchPeriod[index2].away].matches++;
+
+                                teams[matchPeriod[index2].home].homeCount++;
+                                teams[matchPeriod[index2].away].awayCount++;
+
+                                if (firstMatches.length > 0) { // sezonun birinci yarısı
+
+                                    for (var index3 = 0; index3 < matchPeriod.length; index3++) { // revenge maçı bul ve sil ve ikinci array'e aktar.
+                                        if (matchPeriod[index2].home == matchPeriod[index3].away && matchPeriod[index2].away == matchPeriod[index3].home) {
+                                            secondMatches.push(matchPeriod[index3]);
+                                            matchPeriod.splice(index3, 1);
+                                            matchPeriod.splice(index2, 1);
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    matchPeriod.splice(0, teams.length / 2);
+                                }
+
+                            }
+                        }
+                    }
+
+                    console.log(firstMatches, secondMatches);
+                    calculatePoints(teams);
+                    week++;
+                    startLeague();
+                }
+            }
+
+            if (matchCount != teams.length / 2) {
+                console.log("ÇAKIŞMA VAR!");
+                week=0;
+                document.getElementById('listContainer').innerHTML = "";
+                firstMatches = [];
+                for (let index = 0; index < teams.length; index++) {
+                    teams[index].matches = 0;
+                    teams[index].goals = 0;
+                    teams[index].points = 0;
+                    teams[index].homeCount = 0;
+                    teams[index].awayCount = 0;
+                }
+                startLeague();
+            }
+        }
+
+        function arrayShuffle(o) {
+            for (var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+            return o;
+        }
+
+        function teamRanking(a, b) { //sorting teams by average and point
+            const pointA = a.points;
+            const goalA = a.goals;
+
+            const pointB = b.points;
+            const goalB = b.goals;
+
+            var comparison = 0;
+            if (pointA > pointB) {
+                comparison = -1;
+            } else if (pointA < pointB) {
+                comparison = 1;
+            } else if (pointA == pointB)
+                if (goalA > goalB)
+                    comparison = -1;
+                else
+                    comparison = 1;
+            return comparison;
+        }
+
+        function calculatePoints(teams) {
+            var tableCaptions = "<tr><th>No</th><th>Takım</th><th>Maç</th><th>Av</th><th>P</th></tr>";
+            var row = tableCaptions;
+            document.getElementById('pointTable').innerHTML = row;
+            rankingTeams = teams.slice();
+            rankingTeams.sort(teamRanking);
+
+            for (var r = 0; r < rankingTeams.length; r++) {
+                row += "<tr>";
+                row += "<td>" + (r + 1) + "</td>";
+                row += "<td>" + rankingTeams[r].name + "</td>";
+                row += "<td>" + rankingTeams[r].matches + "</td>";
+                row += "<td>" + rankingTeams[r].goals + "</td>";
+                row += "<td>" + rankingTeams[r].points + "</td>";
+                row += "</tr>";
+            }
+            document.getElementById("pointTable").innerHTML = row;
+        }
+
+    </script>
+</body>
+
+</html>
