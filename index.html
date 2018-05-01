@@ -36,7 +36,8 @@
 <body>
     <label for="teamName">Takım Adı:</label>
     <input type="text" name="teamName" id="teamName" value="">
-    <br/><br/>
+    <br/>
+    <br/>
     <label for="teamPower">Güç:</label>&emsp;&emsp;&nbsp;&nbsp;
     <input type="number" name="teamPower" id="teamPower" min="0" max="10000000000" value="5">
     <br/>
@@ -81,6 +82,14 @@
         //     prepareFixture();
         //     startLeague();
         // }, 500);
+
+        document.getElementById("teamName").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                addTeam();
+                document.getElementById("teamName").value = "";
+            }
+        });
 
         function addTeam() {
 
@@ -247,7 +256,7 @@
 
             if (matchCount != teams.length / 2) {
                 console.log("ÇAKIŞMA VAR!");
-                week=0;
+                week = 0;
                 document.getElementById('listContainer').innerHTML = "";
                 firstMatches = [];
                 for (let index = 0; index < teams.length; index++) {
@@ -297,12 +306,14 @@
                 row += "<tr>";
                 row += "<td>" + (r + 1) + "</td>";
                 row += "<td>" + rankingTeams[r].name + "</td>";
-                row += "<td>" + rankingTeams[r].matches + "</td>";
+                row += "<td>" + week + "</td>";
                 row += "<td>" + rankingTeams[r].goals + "</td>";
                 row += "<td>" + rankingTeams[r].points + "</td>";
                 row += "</tr>";
             }
             document.getElementById("pointTable").innerHTML = row;
+            console.log(teams);
+
         }
 
     </script>
