@@ -77,6 +77,7 @@
         var secondMatches = [];
         var week = 0;
         var uniqueID = 0;
+        // var allSeason = [];
 
         // setTimeout(function () {
         //     prepareFixture();
@@ -104,6 +105,7 @@
                 team.goals = 0;
                 team.points = 0;
                 team.power = parseInt(document.getElementById("teamPower").value);
+
                 teams[idCount] = team;
                 idCount++;
                 // console.log(teams);
@@ -114,7 +116,6 @@
                     document.getElementById("start").setAttribute('disabled', 'disabled');
 
                 calculatePoints(teams);
-                console.log(teams, idCount);
             }
         }
 
@@ -154,6 +155,10 @@
                     document.getElementById('listContainer').style.display = "block";
                     console.log("SEZON TAMAMLANDI!");
 
+
+
+
+
                 } else {
                     continueLeague(secondMatches);
                 }
@@ -168,37 +173,66 @@
             var currentWeekMatches = [];
             var results = "";
 
-            for (var index0 = 0; index0 < matchPeriod.length; index0++) {
+            for (var i = 0; i < matchPeriod.length; i++) {
 
-                if (currentWeekMatches.indexOf(matchPeriod[index0].home) != -1 || currentWeekMatches.indexOf(matchPeriod[index0].away) != -1)
+                if (currentWeekMatches.indexOf(matchPeriod[i].home) != -1 || currentWeekMatches.indexOf(matchPeriod[i].away) != -1)
                     continue; // aynı hafta aynı takım tekrar maç yapmasın
 
-                currentWeekMatches.push(teams[matchPeriod[index0].home].id, teams[matchPeriod[index0].away].id);
+                currentWeekMatches.push(teams[matchPeriod[i].home].id, teams[matchPeriod[i].away].id);
 
                 //power measurement
-                if (teams[matchPeriod[index0].home].power > teams[matchPeriod[index0].away].power) {
+                if (teams[matchPeriod[i].home].power > teams[matchPeriod[i].away].power) {
 
                     randomHome = Math.floor(Math.random() * 4) + 2;  // 2, 3 , 4, 5
                     randomAway = Math.floor(Math.random() * 3);
                 }
-                else if (teams[matchPeriod[index0].home].power < teams[matchPeriod[index0].away].power) {
+                else if (teams[matchPeriod[i].home].power < teams[matchPeriod[i].away].power) {
 
                     randomAway = Math.floor(Math.random() * 4) + 2; // 2, 3 , 4, 5
                     randomHome = Math.floor(Math.random() * 3); // 0, 1, 2
                 }
 
-                else if (teams[matchPeriod[index0].home].power == teams[matchPeriod[index0].away].power) {
+                else if (teams[matchPeriod[i].home].power == teams[matchPeriod[i].away].power) {
                     randomHome = Math.floor(Math.random() * 3); // 0, 1
                     randomAway = Math.floor(Math.random() * 3); // 0, 1
                 }
 
-                results += "<li>" + "<span style='display:none;'>" + matchPeriod[index0].id + "</span>" + teams[matchPeriod[index0].home].name + " " + randomHome + "-" + randomAway + " " + teams[matchPeriod[index0].away].name + "</li>";
+                results += "<li>" + "<span style='display:none;'>" + matchPeriod[i].id + "</span>" + teams[matchPeriod[i].home].name + " " + randomHome + "-" + randomAway + " " + teams[matchPeriod[i].away].name + "</li>";
 
-                matchPeriod[index0].lastScore = randomHome + "-" + randomAway;
+                matchPeriod[i].lastScore = randomHome + "-" + randomAway;
 
                 matchCount++;
 
+                var homeResult;
+                var awayResult;
+
+                if (randomHome > randomAway) {
+                    teams[matchPeriod[i].home].points += 3;
+                    // homeResult = "W"; //win
+                    // awayResult = "L"; //lost
+
+                }
+                else if (randomHome == randomAway) {
+                    teams[matchPeriod[i].home].points += 1;
+                    teams[matchPeriod[i].away].points += 1;
+                    // homeResult = "D"; //draw
+                    // awayResult = "D"; //draw
+
+                }
+                else {
+                    teams[matchPeriod[i].away].points += 3;
+                    // homeResult = "L"; //lost
+                    // awayResult = "W"; //win
+                }
+
+                teams[matchPeriod[i].home].goals += randomHome;
+                teams[matchPeriod[i].away].goals += randomAway;
+
+                // allSeason.push({ id: teams[matchPeriod[i].home].id, goal: randomHome, result: homeResult }, { id: teams[matchPeriod[i].away].id, goal: randomAway, result: awayResult });
+
                 if (matchCount == teams.length / 2) {
+                    // console.log(allSeason);
+
 
                     document.getElementById('listContainer').innerHTML += week + ". Hafta" + "<ul class=week" + (week - 1) + ">" + results + "</ul><hr>";
 
@@ -209,25 +243,25 @@
                         for (var index2 = 0; index2 < matchPeriod.length; index2++) {
                             if (matches[index].innerHTML == matchPeriod[index2].id) {
 
-                                var lastScore = matchPeriod[index2].lastScore;
-                                lastScore = lastScore.split("-");
+                                // var lastScore = matchPeriod[index2].lastScore;
+                                // lastScore = lastScore.split("-");
 
-                                if (lastScore[0] == lastScore[1]) {
-                                    teams[matchPeriod[index2].home].points += 1;
-                                    teams[matchPeriod[index2].away].points += 1;
-                                } else if (lastScore[0] > lastScore[1]) {
-                                    teams[matchPeriod[index2].home].points += 3;
-                                } else {
-                                    teams[matchPeriod[index2].away].points += 3;
-                                }
-                                teams[matchPeriod[index2].home].goals += parseInt(lastScore[0]);
-                                teams[matchPeriod[index2].away].goals += parseInt(lastScore[1]);
+                                // if (lastScore[0] == lastScore[1]) {
+                                //     teams[matchPeriod[index2].home].points += 1;
+                                //     teams[matchPeriod[index2].away].points += 1;
+                                // } else if (lastScore[0] > lastScore[1]) {
+                                //     teams[matchPeriod[index2].home].points += 3;
+                                // } else {
+                                //     teams[matchPeriod[index2].away].points += 3;
+                                // }
+                                // teams[matchPeriod[index2].home].goals += parseInt(lastScore[0]);
+                                // teams[matchPeriod[index2].away].goals += parseInt(lastScore[1]);
 
-                                teams[matchPeriod[index2].home].matches++;
-                                teams[matchPeriod[index2].away].matches++;
+                                // teams[matchPeriod[index2].home].matches++;
+                                // teams[matchPeriod[index2].away].matches++;
 
-                                teams[matchPeriod[index2].home].homeCount++;
-                                teams[matchPeriod[index2].away].awayCount++;
+                                // teams[matchPeriod[index2].home].homeCount++;
+                                // teams[matchPeriod[index2].away].awayCount++;
 
                                 if (firstMatches.length > 0) { // sezonun birinci yarısı
 
@@ -247,7 +281,7 @@
                         }
                     }
 
-                    console.log(firstMatches, secondMatches);
+                    // console.log(firstMatches, secondMatches);
                     calculatePoints(teams);
                     week++;
                     startLeague();
@@ -312,8 +346,7 @@
                 row += "</tr>";
             }
             document.getElementById("pointTable").innerHTML = row;
-            console.log(teams);
-
+            // console.log(teams);
         }
 
     </script>
